@@ -1,24 +1,50 @@
 # SynchronizePostgresStoredProcedures
 
-TODO: Delete this and the text below, and describe your gem
+Don't want to track down multiple versions of a stored procedure across
+multiple migrations to find the current source? Want to just edit a file
+and have the stored procedure (or function) be automatically updated
+in your database as part of the db:migrate step? Then this gem is
+for you.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/synchronize_postgres_stored_procedures`. To experiment with that code, run `bin/console` for an interactive prompt.
+Given a directory of stored procedures, it will add, update, and drop the sp's in the database to match the directory on disk.
+
+## The Rules
+The rules are simple:
+
+* install the gem as directed below
+* put each stored procedure in it's own file (see below for example) in the db/sp directory.
+* all your stored procedures must start with the name 'sp_'. This is to prevent conflict with existing postgres stored procedures.
+* the stored procedures will be installed alphabetically, so if you have one sp that depends on another sp, be sure the other sp comes first alphabetically.
+
+### Example
+
+Say you have this function, called 'sp_unaccent', as below:
+```sql
+CREATE OR REPLACE FUNCTION sp_unaccent(text)
+  RETURNS text AS
+$func$
+SELECT public.unaccent('public.unaccent', $1)  -- schema-qualify function and dictionary. Modifies public version to be IMMUTABLE so it can be indexed.
+$func$  LANGUAGE sql IMMUTABLE;
+```
+Place that text in the file db/sp/sp_unaccent.sql, and this gem will ensure that the sp is up to date in any database that the migrations are applied to.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
-
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
-
-If bundler is not being used to manage dependencies, install the gem by executing:
-
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
-
+```ruby
+gem 'synchronize_postgres_stored_procedures'
+```
+Execute
+```sh
+ bundle install
+```
 ## Usage
+Require the gem in your Capfile:
 
-TODO: Write usage instructions here
+```ruby
+require 'synchronize_postgres_stored_procedures'
+```
 
 ## Development
 
